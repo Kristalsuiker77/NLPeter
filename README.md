@@ -1,6 +1,6 @@
 # NLPeter
 
-NLPeter helpt mensen een shift in mindset te maken. Je vertelt hardop waar je vastloopt; de app zet je spraak om naar tekst en analyseert hoe je praat met NLP: VAK-predicaten, metamodel-patronen, metaprogramma's, waarden, belemmerende overtuigingen en logische niveaus. Daarna geeft Peter advies van de huidige naar de gewenste situatie.
+NLPeter helpt mensen een shift in mindset te maken. Je vertelt hardop waar je vastloopt; de app zet je spraak om naar tekst en analyseert hoe je praat: VAK-predicaten, metamodel-patronen, metaprogramma's, waarden, belemmerende overtuigingen en logische niveaus uit NLP, verandertaal en gereedheid voor verandering uit motiverende gespreksvoering, en denkfouten uit cognitieve gedragstherapie. Daarna geeft Peter advies van de huidige naar de gewenste situatie.
 
 NLPeter is een coachingshulpmiddel, geen therapie of diagnose.
 
@@ -20,9 +20,11 @@ De stroom: spraak wordt op het toestel omgezet naar tekst (`expo-speech-recognit
 ```bash
 cd server
 npm install
-export ANTHROPIC_API_KEY=...   # of: ant auth login
+cp .env.example .env           # zet je ANTHROPIC_API_KEY in .env
 npm run dev                    # luistert op http://localhost:8787
 ```
+
+`.env` staat in `.gitignore` en komt dus nooit in de repo.
 
 ### App
 
@@ -35,7 +37,9 @@ echo "EXPO_PUBLIC_API_URL=http://<ip-van-je-computer>:8787" > .env
 npx expo run:ios       # of: npx expo run:android
 ```
 
-Gebruik het IP-adres van je computer in je lokale netwerk, niet `localhost`, als je op een echte telefoon test.
+Gebruik het IP-adres van je computer in je lokale netwerk, niet `localhost`, als je op een echte telefoon test. Telefoon en computer moeten op hetzelfde wifi zitten. Op iOS vraagt de app de eerste keer toestemming voor het lokale netwerk; zonder die toestemming bereikt de app de server niet.
+
+Op een iPhone met een gratis Apple ID: zet Ontwikkelaarsmodus aan (Instellingen > Privacy en beveiliging), en vertrouw na installatie je Apple ID via Instellingen > Algemeen > VPN en apparaatbeheer. De app werkt dan 7 dagen; daarna opnieuw installeren met `npx expo run:ios --device`.
 
 ## Privacy en veiligheid
 

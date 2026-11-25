@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { stream } from "hono/streaming";
 import Anthropic from "@anthropic-ai/sdk";
 import { analyseTranscript, AnalyseError } from "./analyse.js";
 
@@ -17,6 +18,17 @@ function allow(ip: string): boolean {
   recent.push(now);
   hits.set(ip, recent);
   return true;
+}
+
+function errorCode(e: unknown): string {
+  if (e instanceof AnalyseError) return e.code;
+  if (e instanceof Anthropic.RateLimitError) return "busy";
+  if (e instanceof Anthropic.APIError) {
+    console.error("Claude API-fout", e.status);
+    return "upstream";
+  }
+  console.error("Onverwachte fout", e instanceof Error ? e.name : "onbekend");
+  return "server";
 }
 
 const app = new Hono();
@@ -41,20 +53,27 @@ app.post("/analyse", async (c) => {
   if (words < MIN_WORDS) return c.json({ error: "too_short" }, 400);
   if (transcript.length > MAX_CHARS) return c.json({ error: "too_long" }, 400);
 
-  try {
-    const analysis = await analyseTranscript(transcript);
-    return c.json({ analysis });
-  } catch (e) {
-    // Log nooit het transcript zelf: het is gevoelige persoonlijke informatie.
-    if (e instanceof AnalyseError) return c.json({ error: e.code }, 422);
-    if (e instanceof Anthropic.RateLimitError) return c.json({ error: "busy" }, 503);
-    if (e instanceof Anthropic.APIError) {
-      console.error("Claude API-fout", e.status);
-      return c.json({ error: "upstream" }, 502);
+  // Een analyse duurt vaak langer dan een minuut. iOS breekt een verzoek af als er
+  // 60 seconden geen data binnenkomt. Daarom sturen we meteen een 200 en daarna elke
+  // 15 seconden een spatie; JSON.parse negeert witruimte vooraan. Fouten komen als
+  // {"error": ...} in de body.
+  c.header("content-type", "application/json; charset=utf-8");
+  c.header("cache-control", "no-store");
+  return stream(c, async (s) => {
+    const keepalive = setInterval(() => {
+      s.write(" ").catch(() => {});
+    }, 15_000);
+    try {
+      await s.write(" ");
+      const analysis = await analyseTranscript(transcript);
+      await s.write(JSON.stringify({ analysis }));
+    } catch (e) {
+      // Log nooit het transcript zelf: het is gevoelige persoonlijke informatie.
+      await s.write(JSON.stringify({ error: errorCode(e) }));
+    } finally {
+      clearInterval(keepalive);
     }
-    console.error("Onverwachte fout", e instanceof Error ? e.name : "onbekend");
-    return c.json({ error: "server" }, 500);
-  }
+  });
 });
 
 const port = Number(process.env.PORT ?? 8787);
