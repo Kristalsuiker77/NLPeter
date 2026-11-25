@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "NLPeter",
+    "slug": "nlpeter",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.nlpeter"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "app.nlpeter"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "NLPeter gebruikt de microfoon om naar je verhaal te luisteren.",
+          "speechRecognitionPermission": "NLPeter zet je spraak om naar tekst om patronen in je taal te herkennen.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ]
+    ],
+    "scheme": "nlpeter",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
