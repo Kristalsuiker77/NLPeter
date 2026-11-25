@@ -19,5 +19,8 @@
     "typescript": "^7.0.2"
   },
   "type": "module",
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=22.9 <25"
+  }
 }

@@ -1,8 +1,23 @@
+import { timingSafeEqual } from "node:crypto";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import Anthropic from "@anthropic-ai/sdk";
 import { analyseTranscript, AnalyseError } from "./analyse.js";
+
+// Alleen de app kent deze sleutel. Zonder sleutel kan iedereen die het adres vindt
+// analyses laten draaien op jouw Claude-rekening. Lokaal mag hij leeg blijven.
+const APP_TOKEN = process.env.APP_TOKEN?.trim() ?? "";
+if (!APP_TOKEN && process.env.RENDER) {
+  console.error("APP_TOKEN ontbreekt. Zet hem in de omgevingsvariabelen van de service.");
+  process.exit(1);
+}
+function authorized(header: string | undefined): boolean {
+  if (!APP_TOKEN) return true;
+  const given = Buffer.from(header?.replace(/^Bearer\s+/i, "") ?? "");
+  const expected = Buffer.from(APP_TOKEN);
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
 
 const MIN_WORDS = 30;
 const MAX_CHARS = 40_000;
@@ -36,6 +51,7 @@ const app = new Hono();
 app.get("/health", (c) => c.json({ ok: true }));
 
 app.post("/analyse", async (c) => {
+  if (!authorized(c.req.header("authorization"))) return c.json({ error: "unauthorized" }, 401);
   const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "onbekend";
   if (!allow(ip)) return c.json({ error: "rate_limited" }, 429);
 

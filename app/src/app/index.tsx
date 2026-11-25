@@ -1,10 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, AppState, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from "react-native";
 import { router } from "expo-router";
 import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from "expo-speech-recognition";
-import { analyse, ApiError } from "../lib/api";
+import { analyse, ApiError, wakeServer } from "../lib/api";
 import { saveSession } from "../lib/storage";
 import { useTheme } from "../lib/theme";
 import { Button, Card, Label, P } from "../components/ui";
@@ -19,6 +19,14 @@ export default function RecordScreen() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ msg: string; err?: boolean } | null>(null);
   const ctl = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    wakeServer();
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") wakeServer();
+    });
+    return () => sub.remove();
+  }, []);
 
   useSpeechRecognitionEvent("start", () => setListening(true));
   useSpeechRecognitionEvent("end", () => {
@@ -74,7 +82,7 @@ export default function RecordScreen() {
     if (listening) ExpoSpeechRecognitionModule.stop();
     ctl.current = new AbortController();
     setBusy(true);
-    setStatus({ msg: "Peter luistert naar je woorden en zoekt patronen. Dit duurt meestal 20 tot 60 seconden." });
+    setStatus({ msg: "Peter luistert naar je woorden en zoekt patronen. Dit duurt 1 tot 2 minuten. Laat de app zolang open." });
     try {
       const analysis = await analyse(transcript, ctl.current.signal);
       const id = Date.now().toString(36);

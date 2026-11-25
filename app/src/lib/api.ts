@@ -1,6 +1,9 @@
 import type { Analysis } from "./types";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787";
+// Sleutel die de server verwacht. Staat in de app zelf, dus het is een slot tegen
+// toevallige bezoekers, geen echt geheim.
+const APP_TOKEN = process.env.EXPO_PUBLIC_APP_TOKEN ?? "";
 
 const MESSAGES: Record<string, string> = {
   too_short: "Vertel iets meer (minimaal 30 woorden), dan heeft Peter genoeg om patronen te herkennen.",
@@ -9,16 +12,28 @@ const MESSAGES: Record<string, string> = {
   busy: "Peter is even druk. Probeer het over een minuut opnieuw.",
   refusal: "Peter kon dit verhaal niet analyseren. Probeer het anders te verwoorden.",
   invalid_output: "Peter gaf een onvolledig antwoord. Probeer het nog eens.",
+  unauthorized: "Deze versie van de app heeft geen toegang tot de server. Installeer de app opnieuw.",
 };
 
 export class ApiError extends Error {}
+
+/**
+ * Wekt de server alvast. Een gratis server slaapt na een kwartier zonder verkeer en
+ * heeft dan ongeveer een minuut nodig om op te starten. Terwijl jij praat, wordt hij wakker.
+ */
+export function wakeServer(): void {
+  fetch(`${API_URL}/health`).catch(() => {});
+}
 
 export async function analyse(transcript: string, signal?: AbortSignal): Promise<Analysis> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}/analyse`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(APP_TOKEN ? { authorization: `Bearer ${APP_TOKEN}` } : {}),
+      },
       body: JSON.stringify({ transcript }),
       signal,
     });
