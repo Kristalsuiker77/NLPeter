@@ -41,10 +41,35 @@ Gebruik het IP-adres van je computer in je lokale netwerk, niet `localhost`, als
 
 Op een iPhone met een gratis Apple ID: zet Ontwikkelaarsmodus aan (Instellingen > Privacy en beveiliging), en vertrouw na installatie je Apple ID via Instellingen > Algemeen > VPN en apparaatbeheer. De app werkt dan 7 dagen; daarna opnieuw installeren met `npx expo run:ios --device`.
 
+## Online zetten (Render)
+
+`render.yaml` beschrijft de server voor [Render](https://render.com): gratis plan, regio Frankfurt, automatisch opnieuw uitrollen bij elke commit op `main`. De gratis server slaapt na 15 minuten zonder verkeer en heeft daarna ongeveer een minuut nodig om op te starten. De app maakt hem daarom al wakker zodra je hem opent.
+
+De server eist online een app-sleutel (`APP_TOKEN`), zodat niet iedereen die het adres vindt analyses kan laten draaien op jouw Claude-rekening. De app stuurt dezelfde sleutel mee (`EXPO_PUBLIC_APP_TOKEN`). Die sleutel zit in de app zelf: een slot tegen toevallige bezoekers, geen echt geheim. Zet daarom ook een uitgavelimiet in de Claude Console.
+
+1. Maak op de Mac een app-sleutel en zet hem in `app/.env`. Het adres vul je in zodra Render het heeft gegeven:
+
+   ```bash
+   cd app
+   TOKEN=$(openssl rand -hex 32)
+   printf 'EXPO_PUBLIC_API_URL=https://nlpeter-api.onrender.com\nEXPO_PUBLIC_APP_TOKEN=%s\n' "$TOKEN" > .env
+   printf %s "$TOKEN" | pbcopy   # de sleutel staat nu op het klembord
+   ```
+
+2. In Render: **New > Blueprint**, kies deze repo en vul in:
+   - `ANTHROPIC_API_KEY`: een aparte sleutel uit de Claude Console, bijvoorbeeld "NLPeter Render"
+   - `APP_TOKEN`: plakken van het klembord
+3. Controleer `https://<jouw-adres>.onrender.com/health`; dat geeft `{"ok":true}`.
+4. Bouw de app als Release, zodat hij zonder Mac werkt:
+
+   ```bash
+   npx expo run:ios --device --configuration Release
+   ```
+
 ## Privacy en veiligheid
 
 - Spraak wordt waar mogelijk op het toestel omgezet (`requiresOnDeviceRecognition`). Op toestellen zonder on-device herkenning gebruikt het besturingssysteem de spraakdienst van Apple of Google.
-- Alleen tekst gaat naar de server. De server logt geen transcripten en bewaart niets.
+- Alleen tekst gaat naar de server. De server logt geen transcripten en bewaart niets. Online draait de server bij Render in Frankfurt (EU).
 - Sessies staan alleen op het toestel (AsyncStorage) en zijn te wissen in de app.
 - Bij signalen van een crisis toont de app 113 Zelfmoordpreventie (0800-0113) en 112.
 - Voor productie nog nodig: verwerkersovereenkomst met Anthropic en eventuele hostingpartij, privacyverklaring, en een duurzame rate limit in plaats van de limiet in het geheugen.
