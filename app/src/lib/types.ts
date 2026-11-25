@@ -21,6 +21,18 @@ export type Analysis = {
     categorie: "hopeloos" | "hulpeloos" | "waardeloos" | "steun";
     herformulering: string;
   }[];
+  verandertaal: {
+    verandering_pct: number;
+    gereedheid: number;
+    toelichting: string;
+    uitspraken: {
+      citaat: string;
+      richting: "verandering" | "behoud";
+      soort: "wens" | "vermogen" | "reden" | "noodzaak" | "commitment" | "activering" | "stappen";
+    }[];
+    vraag: string;
+  };
+  denkfouten: { citaat: string; denkfout: string; uitleg: string; alternatief: string }[];
   metamodel: { citaat: string; patroon: string; vraag: string }[];
   logische_niveaus: {
     omgeving: string;

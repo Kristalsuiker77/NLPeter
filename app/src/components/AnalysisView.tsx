@@ -13,6 +13,78 @@ const LEVELS = [
 ] as const;
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, Number.isFinite(n) ? n : lo));
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const SOORT: Record<Analysis["verandertaal"]["uitspraken"][number]["soort"], string> = {
+  wens: "Wens",
+  vermogen: "Vermogen",
+  reden: "Reden",
+  noodzaak: "Noodzaak",
+  commitment: "Commitment",
+  activering: "Bereidheid",
+  stappen: "Al gezette stap",
+};
+
+function ChangeTalk({ vt }: { vt: Analysis["verandertaal"] }) {
+  const t = useTheme();
+  const pct = Math.round(clamp(vt.verandering_pct, 0, 100));
+  const ready = Math.round(clamp(vt.gereedheid, 1, 10));
+  const change = vt.uitspraken.filter((u) => u.richting === "verandering");
+  const keep = vt.uitspraken.filter((u) => u.richting === "behoud");
+  return (
+    <Card>
+      <H2>Klaar voor verandering?</H2>
+      <View style={st.readyRow}>
+        <Text style={[st.readyNum, { color: t.accent }]}>{ready}</Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Label>Gereedheid, schaal 1 tot 10</Label>
+          <P>{vt.toelichting}</P>
+        </View>
+      </View>
+      <View style={{ gap: 6 }}>
+        <View style={st.ends}>
+          <Text style={{ color: t.good, fontSize: 13, fontWeight: "600" }}>Verandertaal {pct}%</Text>
+          <Text style={{ color: t.warn, fontSize: 13, fontWeight: "600" }}>Behoudtaal {100 - pct}%</Text>
+        </View>
+        <View
+          style={[st.split, { backgroundColor: t.warnSoft }]}
+          accessible
+          accessibilityLabel={`${pct} procent verandertaal, ${100 - pct} procent behoudtaal`}
+        >
+          <View style={{ width: `${pct}%`, height: "100%", backgroundColor: t.good }} />
+        </View>
+      </View>
+      {change.length > 0 && (
+        <View style={{ gap: 8 }}>
+          <H3>Wat je in beweging brengt</H3>
+          {change.map((u, i) => (
+            <View key={i} style={{ gap: 4 }}>
+              <Chip tone="support">{SOORT[u.soort] ?? u.soort}</Chip>
+              <Quote>{u.citaat}</Quote>
+            </View>
+          ))}
+        </View>
+      )}
+      {keep.length > 0 && (
+        <View style={{ gap: 8 }}>
+          <H3>Wat je tegenhoudt</H3>
+          {keep.map((u, i) => (
+            <View key={i} style={{ gap: 4 }}>
+              <Chip tone="limit">{SOORT[u.soort] ?? u.soort}</Chip>
+              <Quote>{u.citaat}</Quote>
+            </View>
+          ))}
+        </View>
+      )}
+      {!!vt.vraag && (
+        <View style={[st.exercise, { backgroundColor: t.accentSoft }]}>
+          <Label>Vraag om over na te denken</Label>
+          <Text style={[st.q, { color: t.ink }]}>{vt.vraag}</Text>
+        </View>
+      )}
+    </Card>
+  );
+}
 
 export function AnalysisView({ a }: { a: Analysis }) {
   const t = useTheme();
@@ -52,6 +124,8 @@ export function AnalysisView({ a }: { a: Analysis }) {
         <P>{a.samenvatting}</P>
       </Card>
 
+      {a.verandertaal && <ChangeTalk vt={a.verandertaal} />}
+
       <Card>
         <H2>Overtuigingen</H2>
         {a.overtuigingen.map((o, i) => (
@@ -72,10 +146,26 @@ export function AnalysisView({ a }: { a: Analysis }) {
       </Card>
 
       <Card>
-        <H2>Taalpatronen</H2>
-        <P muted>Waar je taal informatie weglaat, generaliseert of vervormt, met een vraag om het preciezer te maken.</P>
+        <H2>Denkfouten en taalpatronen</H2>
+        <P muted>Hoe je gedachten de situatie kleuren, en waar je taal informatie weglaat, generaliseert of vervormt.</P>
+        {(a.denkfouten ?? []).map((d, i) => (
+          <View key={`d${i}`} style={[st.item, i > 0 && { borderTopColor: t.line, borderTopWidth: 1, paddingTop: 12 }]}>
+            <Chip tone="limit">{cap(d.denkfout)}</Chip>
+            <Quote>{d.citaat}</Quote>
+            <P>{d.uitleg}</P>
+            {!!d.alternatief && (
+              <View style={[st.reframe, { borderLeftColor: t.good }]}>
+                <Label>Andere gedachte</Label>
+                <P>{d.alternatief}</P>
+              </View>
+            )}
+          </View>
+        ))}
         {a.metamodel.map((m, i) => (
-          <View key={i} style={[st.item, i > 0 && { borderTopColor: t.line, borderTopWidth: 1, paddingTop: 12 }]}>
+          <View
+            key={`m${i}`}
+            style={[st.item, (i > 0 || (a.denkfouten ?? []).length > 0) && { borderTopColor: t.line, borderTopWidth: 1, paddingTop: 12 }]}
+          >
             <Chip>{m.patroon}</Chip>
             <Quote>{m.citaat}</Quote>
             <Text style={[st.q, { color: t.accent }]}>{m.vraag}</Text>
@@ -208,5 +298,8 @@ const st = StyleSheet.create({
   lvl: { borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, gap: 2 },
   step: { flexDirection: "row", gap: 12 },
   stepNum: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  readyRow: { flexDirection: "row", alignItems: "center", gap: 14 },
+  readyNum: { fontSize: 44, fontWeight: "700", fontVariant: ["tabular-nums"], minWidth: 52, textAlign: "center" },
+  split: { height: 12, borderRadius: 999, overflow: "hidden", flexDirection: "row" },
   exercise: { borderRadius: 10, padding: 10, gap: 2, marginTop: 4 },
 });

@@ -1,6 +1,6 @@
 # NLPeter
 
-NLPeter helpt mensen een shift in mindset te maken. Je vertelt hardop waar je vastloopt; de app zet je spraak om naar tekst en analyseert hoe je praat met NLP: VAK-predicaten, metamodel-patronen, metaprogramma's, waarden, belemmerende overtuigingen en logische niveaus. Daarna geeft Peter advies van de huidige naar de gewenste situatie.
+NLPeter helpt mensen een shift in mindset te maken. Je vertelt hardop waar je vastloopt; de app zet je spraak om naar tekst en analyseert hoe je praat: VAK-predicaten, metamodel-patronen, metaprogramma's, waarden, belemmerende overtuigingen en logische niveaus uit NLP, verandertaal en gereedheid voor verandering uit motiverende gespreksvoering, en denkfouten uit cognitieve gedragstherapie. Daarna geeft Peter advies van de huidige naar de gewenste situatie.
 
 NLPeter is een coachingshulpmiddel, geen therapie of diagnose.
 

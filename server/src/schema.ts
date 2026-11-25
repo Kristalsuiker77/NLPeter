@@ -36,6 +36,39 @@ export const AnalysisSchema = z.object({
       herformulering: z.string(),
     }),
   ),
+  verandertaal: z.object({
+    verandering_pct: z.number(),
+    gereedheid: z.number(),
+    toelichting: z.string(),
+    uitspraken: z.array(
+      z.object({
+        citaat: z.string(),
+        richting: z.enum(["verandering", "behoud"]),
+        soort: z.enum(["wens", "vermogen", "reden", "noodzaak", "commitment", "activering", "stappen"]),
+      }),
+    ),
+    vraag: z.string(),
+  }),
+  denkfouten: z.array(
+    z.object({
+      citaat: z.string(),
+      denkfout: z.enum([
+        "zwart-witdenken",
+        "overgeneraliseren",
+        "rampdenken",
+        "gedachtelezen",
+        "voorspellen",
+        "moeten-denken",
+        "etiketteren",
+        "personaliseren",
+        "emotioneel redeneren",
+        "mentaal filter",
+        "positieve wegredeneren",
+      ]),
+      uitleg: z.string(),
+      alternatief: z.string(),
+    }),
+  ),
   metamodel: z.array(
     z.object({ citaat: z.string(), patroon: z.string(), vraag: z.string() }),
   ),
